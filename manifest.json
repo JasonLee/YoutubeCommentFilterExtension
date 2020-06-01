@@ -1,0 +1,19 @@
+{
+  "name": "Youtube Comment Filter",
+  "version": "1.0",
+  "description": "Chrome extension that filters Youtube comments",
+  "permissions": ["activeTab", "declarativeContent", "storage"],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "options_page": "options.html",
+  "content_scripts": [{
+    "js": ["content.js"],
+    "matches": ["https://www.youtube.com/watch?v=*"]
+  }],
+  "page_action": {
+    "default_popup": "popup.html"
+  },
+  "manifest_version": 2
+}
