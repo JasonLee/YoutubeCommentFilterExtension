@@ -4,14 +4,21 @@ function check_page(){
 
     if (ready_state == "complete") {
         var comments = document.querySelectorAll("#content-text, #content-text > span");
-    
+       
         // Key: Default
-        chrome.storage.sync.get({list: []}, function (data) {
+        chrome.storage.sync.get({list: [], case_sens:false, exact:false}, function (data) {
+            if(data.list.length <= 1 && !data.list[0].trim()){
+                return;
+            }
+
             comments.forEach(function(comment) {
                 for(let i = 0; i < data.list.length; i++) {
-                    if(!isNotSpoilerAlready(comment) && checkWord(data.list[i], comment.innerText)) {
+                    if(!isSpoilerAlready(comment) && checkWord(data.list[i], comment.innerText, data)) {
+                        console.log("comment.parentElement.nodeName = " + comment.parentElement.nodeName);
+                        console.log("BEFORE comment.innerHTML = " + comment.innerHTML);
                         comment.innerHTML = "<details><summary>SPAM</summary>" + comment.innerHTML + "</details>";
-                        // comment.innerText = "SPAM";
+                        console.log("AFTER comment.innerHTML = " + comment.innerHTML);
+                        console.log("Is Spoiler? " + isSpoilerAlready(comment));
                         break;
                     }
                 }
@@ -22,16 +29,23 @@ function check_page(){
 
 }
 
-function checkWord(word, str) {
-    const allowedSeparator = '\\\s,.;\n\r"\'|:-';
-  
-    const regex = new RegExp(`(^.*[${allowedSeparator}]${word}$)|(^${word}[${allowedSeparator}].*)|(^${word}$)|(^.*[${allowedSeparator}]${word}[${allowedSeparator}].*$)`, 'i',);
-    
-    return regex.test(str);
+function checkWord(word, str, data) {
+    const allowedSeparator = '\\\s,.;\n\r"\'|:-?';
+
+    if(data.exact && data.case_sens) {
+        const regex = new RegExp(`(^.*[${allowedSeparator}]${word}$)|(^${word}[${allowedSeparator}].*)|(^${word}$)|(^.*[${allowedSeparator}]${word}[${allowedSeparator}].*$)`);
+        return regex.test(str);
+    }else if(data.exact){
+        const regex = new RegExp(`(^.*[${allowedSeparator}]${word}$)|(^${word}[${allowedSeparator}].*)|(^${word}$)|(^.*[${allowedSeparator}]${word}[${allowedSeparator}].*$)`, 'i');
+        return regex.test(str);
+    }else{
+        return str.includes(word);
+    }
 }
 
-function isNotSpoilerAlready(comment) {
-    return comment.innerText.startsWith("<details>")
+function isSpoilerAlready(comment) {
+    // avoids problem with <details open>
+    return comment.innerHTML.startsWith("<details");
 }
 
 setInterval(check_page, 1000);
